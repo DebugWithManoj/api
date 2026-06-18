@@ -62,8 +62,8 @@ class training_data(BaseModel):
 
 class Employee(BaseModel):
     employee_id:str = Field(...,min_length=6,max_length=6)
-    employee_name: str = Field(..., min_length=5,max_length=30)
-    department: str = Field(...,min_length=5, max_length=20)
+    employee_name: str = Field(..., min_length=2,max_length=30)
+    department: str = Field(...,min_length=1, max_length=20)
     designation: str = Field(...,min_length=2, max_length=20)
     email: str = Field(...,min_length=5, max_length=50)
 
@@ -235,41 +235,3 @@ def delete_emp(employee_id: str):
 
 
 
-@app.get("/employee-training/{employee_id}")
-def employee_training(employee_id: str):
-
-    conn = sqlite3.connect(DB_FILE)
-
-    conn.row_factory = sqlite3.Row
-
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    SELECT
-        employee.employee_id,
-        employee.employee_name,
-        employee.department,
-        employee.designation,
-        employee.email,
-        training.response_id,
-        training.trainer_name,
-        training.training_topic,
-        training.training_duration,
-        training.description,
-        training.training_date
-    FROM employee 
-    LEFT JOIN training 
-    ON employee.employee_id = training.employee_id
-    WHERE employee.employee_id = ?
-    """,
-    (employee_id,)
-    )
-
-    records = cursor.fetchall()
-
-    conn.close()
-
-    if not records:
-        return {"message": "No Record Found"}
-
-    return [dict(row) for row in records]
