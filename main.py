@@ -52,16 +52,16 @@ create_tables()
 
 
 class training_data(BaseModel):
-    employee_id:str = Field(...,max_length=10)
-    name : str = Field(...,max_length=100)
-    trainer_name: str = Field(...,max_length=100)
-    topic : str = Field(...,max_length=100)
+    employee_id:str = Field(...,min_length=6,max_length=6)
+    name : str = Field(...,min_length=3,max_length=30)
+    trainer_name: str = Field(...,min_length=3,max_length=30)
+    topic : str = Field(...,min_length=1,max_length=100)
     duration : float = Field(...,gt=0.1 , lt= 9)
-    description : str = Field(...,max_length=1500)
+    description : str = Field(...,min_length=1,max_length=1500)
     training_date: date
 
 class Employee(BaseModel):
-    employee_id:str = Field(...,min_length=10,max_length=10)
+    employee_id:str = Field(...,min_length=6,max_length=6)
     employee_name: str = Field(..., min_length=5,max_length=30)
     department: str = Field(...,min_length=5, max_length=20)
     designation: str = Field(...,min_length=2, max_length=20)
@@ -150,18 +150,32 @@ def delete_trainingdata(response_id: str):
 
 
 @app.post("/newemployee")
-def create_employee(payload:Employee):
+def create_employee(payload: Employee):
+
     conn = sqlite3.connect(DB_FILE)
-    cursor=conn.cursor()
-    cursor.execute("""
-    INSERT INTO employee(
-        employee_id,
-        employee_name,
-        department,
-        designation,
-        email
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT employee_id FROM employee WHERE employee_id = ?",
+        (payload.employee_id,)
     )
-    VALUES (?, ?, ?, ?, ?)
+
+    existing = cursor.fetchone()
+
+    if existing:
+        conn.close()
+        return {
+            "error": "Employee ID already exists"
+        }
+
+    cursor.execute("""
+        INSERT INTO employee(
+            employee_id,
+            employee_name,
+            department,
+            designation,
+            email
+        )
+        VALUES (?, ?, ?, ?, ?)
     """,
     (
         payload.employee_id,
@@ -170,13 +184,13 @@ def create_employee(payload:Employee):
         payload.designation,
         payload.email
     ))
+
     conn.commit()
     conn.close()
-    logging.warning(f"Employee Data Created for employee id {payload.employee_id}")
-    return{
-        "message" : "Employee data created successfully"
-          }
-
+    logging.warning(f"Employee Data created successfully with emp id {payload.employee_id}")
+    return {
+        "message": "Employee Data created successfully"
+    }
 
 @app.get("/emp_details/{employee_id}")
 def get_employee(employee_id: str):
