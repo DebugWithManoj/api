@@ -90,7 +90,7 @@ def create_training_sheet(payload:training_data):
         payload.name,
         payload.trainer_name,
         payload.topic,
-        payload.duration,
+        round(payload.duration,1),
         payload.description,
         str(payload.training_date)
     ))
