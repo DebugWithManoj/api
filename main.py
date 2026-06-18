@@ -61,11 +61,11 @@ class training_data(BaseModel):
     training_date: date
 
 class Employee(BaseModel):
-    employee_id:str = Field(...,max_length=10)
-    employee_name: str = Field(..., max_length=30)
-    department: str = Field(..., max_length=20)
-    designation: str = Field(..., max_length=20)
-    email: str = Field(..., max_length=50)
+    employee_id:str = Field(...,min_length=10,max_length=10)
+    employee_name: str = Field(..., min_length=5,max_length=30)
+    department: str = Field(...,min_length=5, max_length=20)
+    designation: str = Field(...,min_length=2, max_length=20)
+    email: str = Field(...,min_length=5, max_length=50)
 
 @app.post("/add_training")
 def create_training_sheet(payload:training_data):
