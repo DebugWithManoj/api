@@ -54,7 +54,7 @@ create_tables()
 
 class training_data(BaseModel):
     employee_id:str = Field(...,min_length=6,max_length=6)
-    name : str = Field(...,min_length=3,max_length=30)
+    name : str = Field(...,min_length=3,max_length=30,pattern = r'^[A-Za-z\s.\-]+\$')
     trainer_name: str = Field(...,min_length=3,max_length=30)
     topic : str = Field(...,min_length=1,max_length=100)
     duration : float = Field(...,gt=0.1 , lt= 9)
@@ -63,7 +63,7 @@ class training_data(BaseModel):
 
 class Employee(BaseModel):
     employee_id:str = Field(...,min_length=6,max_length=6)
-    employee_name: str = Field(..., min_length=2,max_length=30)
+    employee_name: str = Field(..., min_length=2,max_length=30,pattern = r'^[A-Za-z\s.\-]+\$')
     department: str = Field(...,min_length=1, max_length=20)
     designation: str = Field("Designation Not Mentioned",min_length=2, max_length=20)
     email:EmailStr
@@ -86,7 +86,7 @@ def create_training_sheet(payload:training_data):
                    training_date) VALUES (?,?, ?, ?, ?, ?, ?, ?)
     """,
     (   
-        payload.employee_id.strip(),
+        payload.employee_id.strip().upper(),
         unique_response_id.strip(),
         payload.name.strip(),
         payload.trainer_name.strip(),
@@ -172,7 +172,7 @@ def create_employee(payload: Employee):
     cursor = conn.cursor()
     cursor.execute(
         "SELECT employee_id FROM employee WHERE employee_id = ?",
-        (payload.employee_id,)
+        ((payload.employee_id).strip().upper(),)
     )
 
     existing = cursor.fetchone()
@@ -194,7 +194,7 @@ def create_employee(payload: Employee):
         VALUES (?, ?, ?, ?, ?)
     """,
     (
-        payload.employee_id.strip(),
+        payload.employee_id.strip().upper(),
         payload.employee_name.strip(),
         payload.department.strip(),
         payload.designation.strip(),
@@ -218,7 +218,7 @@ def get_employee(employee_id: str):
 
     cursor.execute(
         "SELECT * FROM employee WHERE employee_id=?",
-        (employee_id,)
+        (employee_id.strip().upper(),)
     )
 
     record = dict(cursor.fetchone())
@@ -241,7 +241,7 @@ def delete_emp(employee_id: str):
     cursor = conn.cursor()
     cursor.execute(
         "SELECT employee_id FROM employee WHERE employee_id = ?",
-        (employee_id,)
+        (employee_id.strip().upper(),)
     )
 
     existing = cursor.fetchone()
@@ -249,7 +249,7 @@ def delete_emp(employee_id: str):
         cursor.execute("""
                         DELETE FROM employee WHERE employee_id=?
                     """,
-                    (employee_id,)
+                    (employee_id.strip().upper(),)
                         )
         conn.commit()
         conn.close()
@@ -265,3 +265,40 @@ def delete_emp(employee_id: str):
         return {
             "result": "Employee Data Not Found"
         }
+        
+@app.get("/all_emp_details/")
+def all_emp_details():
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row 
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM employee",
+    )
+    all_details = cursor.fetchall()
+    conn.close()
+    all_employees = [dict(row) for row in all_details]
+    logging.warning("Fetched all employee details")
+    return all_employees
+
+@app.get("/all_training_details/")
+def all_emp_details():
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row 
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM training",
+    )
+    all_details = cursor.fetchall()
+    conn.close()
+    all_training = [dict(row) for row in all_details]
+    logging.warning("Fetched all employee details")
+    return all_training
+
+
+
+
+
+
+
+
+
